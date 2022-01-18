@@ -9,9 +9,6 @@ Example:
     yup.ping()
 """
 
-from .models import InputItem
-
-import dataclasses
 import json
 import logging
 import os
@@ -102,4 +99,3 @@ def yupdates_client(token=None, base_url=None, quiet=False):
             if base_url == "coming soon":
                 raise ValueError("Sorry, during the preview you also need to set YUPDATES_API_URL")
     return YupdatesClient(token, base_url, quiet)
-

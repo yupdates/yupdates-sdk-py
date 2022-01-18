@@ -20,9 +20,9 @@ $ pip install yupdates
 
 Or, install from source:
 ```shell
-$ git clone git://github.com/yupdates/yupdates-sdk-rs.git
-$ cd yupdates-sdk-rs
-$ python setup.py install
+$ git clone git://github.com/yupdates/yupdates-sdk-py.git
+$ cd yupdates-sdk-py
+$ pip install .
 ```
 
 Set the API token environment variable:
@@ -40,20 +40,25 @@ export YUPDATES_API_URL="https://..."
 Now test the connection and authentication. This will work from a Python shell or script:
 ```python
 from yupdates import yapi
-
-response_dict = yapi.ping()
-print(response_dict)
+print(yapi.ping())
 ```
 
 If there is anything but a 200 response, it will throw an exception. Otherwise, this will print out the JSON response which is returned from the `ping` function deserialized into a Python dict.
 
 The `ping` operation is helpful to run in the beginning of your scripts to make sure there are no setup issues.
 
+Another way to use the SDK is to instantiate a client once and use it repeatedly:
+```python
+from yupdates.client import yupdates_client
+yup = yupdates_client()
+print(yup.ping())
+```
+
 ### Getting help
 
 You can create a [GitHub issue](https://github.com/yupdates/yupdates-sdk-py/issues) on this repository for bugs and feature requests.
 
-The fastest way to get help is to create a support ticket from the Yupdates application. Or email `support@yupdates.com`. Especially you need help that is not specific to this SDK.
+The fastest way to get help is to create a support ticket from the Yupdates application. Or email `support@yupdates.com`. Especially if you need help that is not specific to this SDK.
 
 ### License
 
