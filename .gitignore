@@ -127,3 +127,23 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Other commonly ignored files and directories
+.DS_Store
+*.iml
+*sublime-project
+*sublime-workspace
+settings.ini
+.idea/
+.vscode/
+node_modules/
+*~
+*.swp
+*.swo
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
