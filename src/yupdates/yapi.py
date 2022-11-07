@@ -27,3 +27,7 @@ def ping_bool():
 
 def new_items(items):
     return yupdates_client().new_items(items)
+
+
+def read_items(feed_id, **kwargs):
+    return yupdates_client().read_items(feed_id, **kwargs)

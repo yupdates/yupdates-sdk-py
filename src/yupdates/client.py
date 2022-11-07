@@ -22,12 +22,14 @@ Examples
     yc.new_items([item])
 """
 
-from .models import InputItem
+from . import normalize_item_time
+from .models import InputItem, FeedItem
 
 import dataclasses
 import json
 import logging
 import os
+import urllib.parse
 import urllib.request as ur
 
 logger = logging.getLogger(__name__)
@@ -64,6 +66,8 @@ class YupdatesClient:
         """Test the connection and authentication by calling ping.
 
         Returns the JSON response as a Python dict. There will be an exception if there is an issue.
+
+        GET $base_url/ping/
         """
         url = f"{self.base_url}ping/"
         req = ur.Request(url, headers=self._headers())
@@ -88,13 +92,30 @@ class YupdatesClient:
 
         Returns the JSON response as a Python dict. There will be an exception if there is an issue.
 
+        POST $base_url/items/
+
         Parameters
         ----------
         items : list of models.InputItem
+            You can send up to 10 at a time. See notes below for chunked example. Sending zero
+            items is legal (you might want to verify the credential is authorized for this call, or
+            you might want to get the matching `feed_id` returned without adding an item).
 
         Raises
         ------
         urllib.error.HTTPError
+
+        Notes
+        -----
+        To send a list larger than 10, chunk them into separate calls of 10 or fewer items.
+        For example, given the list `items` and YupdatesClient `yc`:
+
+            chunk_size = 10
+            list_chunked = [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
+            for chunk in list_chunked:
+                yc.new_items(chunk)
+                print(f"Added {len(chunk)} item(s)")
+                time.sleep(0.2)  # Preempt being throttled
         """
         if not items:
             if not self.quiet:
@@ -107,6 +128,74 @@ class YupdatesClient:
         with ur.urlopen(req) as response:
             json_str = response.read()
             return json.loads(json_str)
+
+    def read_items(self, feed_id, max_items=10, include_item_content=False, item_time_after=None,
+                   item_time_before=None):
+        """Read items from a feed.
+
+        GET $base_url/feeds/$feed_id
+
+        Parameters
+        ----------
+        feed_id : str
+            The feed to read from, an ID like '02fb24a4478462a4491067224b66d9a8b2338dada2737'
+        max_items : int, optional
+            The number of items to return, must be 1 <= N <= 50. Default is 10. May not be more
+            than 10 if `include_item_content` is True.
+        include_item_content : bool
+            If True, populate each FeedItem with the full item content.
+        item_time_after : str or int, optional
+            Only return items that come after this item time (non-inclusive). See notes.
+        item_time_before : str or int, optional
+            Only return items that come before this item time (non-inclusive). See notes.
+
+        Returns
+        -------
+        items : list of models.FeedItem
+
+        Raises
+        ------
+        ValueError
+        urllib.error.HTTPError
+
+        Notes
+        -----
+        If you don't supply `item_time_after` or `item_time_before`, the latest items are queried.
+        You cannot supply `item_time_after` and `item_time_before` at the same time.
+
+        An item time is a unix epoch millisecond with an optional 5 digit suffix. In practice, you
+        would only use the suffix form if you got that as the item time string from the service.
+        Examples: 1234, 1661564013555, "1661564013555", "1661564013555.00003"
+        """
+        if not feed_id:
+            raise ValueError("`feed_id` is missing")
+        feed_id = str(feed_id).strip()
+
+        # Validation to catch basic issues, full validation is server-side
+        if len(feed_id) != 45:
+            raise ValueError("`feed_id` expected to be 45 characters")
+        if include_item_content and not 1 <= max_items <= 10:
+            raise ValueError("`max_items` must be 1 to 10 when `include_item_content` is True")
+        if not 1 <= max_items <= 50:
+            raise ValueError("`max_items` must be 1 to 50")
+
+        params = {'max_items': max_items, 'include_item_content': include_item_content}
+
+        if item_time_after is not None:
+            params['item_time_after'] = normalize_item_time(item_time_after)
+        if item_time_before is not None:
+            params['item_time_before'] = normalize_item_time(item_time_before)
+        if item_time_after and item_time_before:
+            raise ValueError("cannot simultaneously query `item_time_after` and `item_time_before`")
+
+        encoded_params = urllib.parse.urlencode(params)
+        url = f"{self.base_url}feeds/{feed_id}/?{encoded_params}"
+        req = ur.Request(url, headers=self._headers())
+        with ur.urlopen(req) as response:
+            json_str = response.read()
+            data_dict = json.loads(json_str)
+            feed_item_dicts = data_dict['feed_items']
+            return _map_dicts_to_dataclasses(feed_item_dicts, FeedItem)
 
 
 def yupdates_client(token=None, base_url=None, quiet=False):
@@ -159,3 +248,11 @@ def _map_dataclasses_to_dicts(dc_list, klass):
             raise ValueError(f"expected list of {klass}")
         dict_list.append(dataclasses.asdict(dc))
     return dict_list
+
+
+def _map_dicts_to_dataclasses(dict_list, klass):
+    dc_list = []
+    for data_dict in dict_list:
+        dc = klass(**data_dict)
+        dc_list.append(dc)
+    return dc_list
