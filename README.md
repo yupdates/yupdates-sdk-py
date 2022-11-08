@@ -57,7 +57,15 @@ print(yup.ping())
 
 ### Read items from a feed
 
-TODO
+```python
+from yupdates import yapi
+
+feed_id = '02fb24a4478462a4491067224b66d9a8b2338dada2737'
+feed_items = yapi.read_items(feed_id)  # See client.py for optional parameters
+
+for feed_item in feed_items:
+    print(feed_item.title)  # See models.py and API docs for field descriptions
+```
 
 ### Write items to a feed
 
