@@ -2,7 +2,7 @@
 
 The Yupdates Python SDK lets you easily use the Yupdates API from your own software and scripts.
 
-Also see the [Yupdates Rust SDK](https://github.com/yupdates/yupdates-sdk-rs).
+This is [hosted on GitHub](https://github.com/yupdates/yupdates-sdk-py). There is also a [Yupdates Rust SDK](https://github.com/yupdates/yupdates-sdk-rs).
 
 ### Requirements
 
@@ -90,7 +90,7 @@ In the future, it will be possible to obtain a token with wider writer privilege
 
 You can create a [GitHub issue](https://github.com/yupdates/yupdates-sdk-py/issues) on this repository for bugs and feature requests.
 
-The fastest way to get help is to create a support ticket from the Yupdates application. Or email `support@yupdates.com`. Especially if you need help that is not specific to this SDK.
+The fastest way to get help is to create a support ticket from the Yupdates application. Or email `support@yupdates.com`. Especially if you need help that is not specific to this SDK, or if you would like more hands-on setup and troubleshooting advice.
 
 ### Conventions
 
