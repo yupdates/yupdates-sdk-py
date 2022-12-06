@@ -1,4 +1,13 @@
 from dataclasses import dataclass
+from typing import List  # maintains older Python version compatibility
+
+
+@dataclass
+class AssociatedFile:
+    """A file associated with a feed item. See the API documentation for field details."""
+    url: str
+    length: int
+    type_str: str
 
 
 @dataclass
@@ -13,6 +22,7 @@ class FeedItem:
     item_time: str
     item_time_ms: int
     deleted: bool
+    associated_files: List[AssociatedFile] = None
 
 
 @dataclass
@@ -21,3 +31,4 @@ class InputItem:
     title: str
     content: str
     canonical_url: str
+    associated_files: List[AssociatedFile] = None

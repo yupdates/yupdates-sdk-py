@@ -23,7 +23,7 @@ Examples
 """
 
 from . import normalize_item_time
-from .models import InputItem, FeedItem
+from .models import InputItem, FeedItem, AssociatedFile
 
 import dataclasses
 import json
@@ -195,7 +195,14 @@ class YupdatesClient:
             json_str = response.read()
             data_dict = json.loads(json_str)
             feed_item_dicts = data_dict['feed_items']
-            return _map_dicts_to_dataclasses(feed_item_dicts, FeedItem)
+            feed_items = _map_dicts_to_dataclasses(feed_item_dicts, FeedItem)
+
+            # No transitive deserialization for dataclasses :-/
+            for feed_item in feed_items:
+                feed_item.associated_files = \
+                    _map_dicts_to_dataclasses(feed_item.associated_files, AssociatedFile)
+
+            return feed_items
 
 
 def yupdates_client(token=None, base_url=None, quiet=False):
@@ -242,6 +249,8 @@ def yupdates_client(token=None, base_url=None, quiet=False):
 
 
 def _map_dataclasses_to_dicts(dc_list, klass):
+    if dc_list is None:
+        return []
     dict_list = []
     for dc in dc_list:
         if not isinstance(dc, klass):
@@ -251,6 +260,8 @@ def _map_dataclasses_to_dicts(dc_list, klass):
 
 
 def _map_dicts_to_dataclasses(dict_list, klass):
+    if dict_list is None:
+        return []
     dc_list = []
     for data_dict in dict_list:
         dc = klass(**data_dict)
